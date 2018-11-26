@@ -11,7 +11,8 @@ public class Main {
 		System.out.println(m);
 		System.out.println("---------DFA---------");
 		System.out.println(m.toDFA());
-		
+		System.out.println("---------Minimized---------");
+		System.out.println(m.minimize(Machine.Minimizer.Brzozowski));
 	}
 
 }

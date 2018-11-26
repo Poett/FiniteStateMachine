@@ -1,5 +1,6 @@
 package machine;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -88,6 +89,12 @@ public class Machine {
 	public void setEnds(HashSet<State> ends) {
 		this.ends = ends;
 	}
+	
+	public void addEnds(State s) 
+	{
+		if(states.contains(s))
+		this.ends.add(s);
+	}
 
 	public HashSet<String> getAlphabet() {
 		return alphabet;
@@ -110,7 +117,7 @@ public class Machine {
 		
 		if(this.states.add(s)) //.add(s) returns true if state added
 		{
-			machine.put(s, new TransitionMap(this.alphabet)); //initialize an transition map for the state
+			machine.put(s, new TransitionMap(this.alphabet, s)); //initialize an transition map for the state
 		}
 	}
 	
@@ -141,11 +148,75 @@ public class Machine {
 		
 	}
 	
+	public Machine reverse() 
+	{
+		Machine reversedMachine = new Machine(this.alphabet);
+		reversedMachine.setEmptyTransition(emptyTransition);
+		reversedMachine.alphabet.add(emptyTransition);
+		reversedMachine.setStates(this.states);
+	
+		//Initialize the new transition mapping hashmap
+		HashMap<State, TransitionMap> reversedMachineMap = new HashMap<>();
+		for(State s : this.states) 
+		{
+			reversedMachineMap.put(s, new TransitionMap(this.alphabet, s));
+		}
+		
+		//Create all machine partials by reversing TransitionMaps
+		ArrayList<HashMap<State, TransitionMap>> machine_partials = new ArrayList<>();
+		for(State s : machine.keySet()) 
+		{
+			machine_partials.add(machine.get(s).reverseMap());
+		}
+		
+		
+		//For each machine partial, combine that into reversedMachineMap
+		for(HashMap<State, TransitionMap> partial : machine_partials) 
+		{
+			for(State s : partial.keySet()) 
+			{
+				reversedMachineMap.get(s).combine(partial.get(s));
+			}
+		}
+		
+		
+		//Set the new transition map for the reversed machine
+		reversedMachine.machine = reversedMachineMap;
+		
+		
+		//Set the reversed machine's start and final
+		//Start
+		if(this.ends.size() > 1)  //Create a new Start State to connect to all ends
+		{
+			State newStart = new State("NEW");
+			reversedMachine.addState(newStart);
+			reversedMachine.setStart(newStart);
+			
+			for(State e : this.ends) 
+			{
+				reversedMachine.addTransition(newStart, emptyTransition, e);
+			}
+			
+		}
+		else 
+		{
+			reversedMachine.setStart((State) this.ends.toArray()[0]);
+		}
+		//Final
+		reversedMachine.addEnds(this.start);
+		
+		return reversedMachine;
+	
+	}
+	
 	public Machine toDFA() 
 	{
 		
+		if(emptyTransition == null) {return this;}
+		
 		Machine dfa = new Machine(this.alphabet);
 		dfa.alphabet.remove(emptyTransition);
+		dfa.setEmptyTransition(emptyTransition);
 		
 		//Hashmap of closure sets - saves the states transitioned via empty including itself
 		HashMap<State, HashSet<State>> closureSets = new HashMap<State, HashSet<State>>(); 
@@ -221,7 +292,7 @@ public class Machine {
 		return dfa;
 	}
 	
-	public void minimize(Minimizer m) {}
+	public Machine minimize(Minimizer m) {return m.minimize(this);}
 	
 	
 	public String toString() 
@@ -252,31 +323,33 @@ public class Machine {
 		Huffman {
 			@Override
 			public Machine minimize(Machine machine) {
-				Machine DFA = new Machine(machine.alphabet);
+				Machine huff = new Machine(machine.alphabet);
 				
 				
-				return DFA;
+				return huff;
 			}
 		}, 
 		Brzozowski {
 			@Override
 			public Machine minimize(Machine machine) {
-				Machine DFA = new Machine(machine.alphabet);
-				
-				
-				return DFA;
+				return machine.toDFA().reverse().toDFA().reverse();
 				
 			}
 		}, 
 		Hopcroft {
 			@Override
 			public Machine minimize(Machine machine) {
-				Machine DFA = new Machine(machine.alphabet);
+				Machine hop = new Machine(machine.alphabet);
 				
 				
-				return DFA;
+				return hop;
 			}
 		};
+		
+		
+		
+
+		
 		
 		
 		public abstract Machine minimize(Machine machine);

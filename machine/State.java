@@ -66,8 +66,8 @@ public class State
 	
 	public String toString() 
 	{
-		return this.stateSet.toString();
-		//return StateAlias.instance().getStateAlias(this);
+		//return this.stateSet.toString();
+		return StateAlias.instance().getStateAlias(this);
 	}
 	
 	@Override
