@@ -4,7 +4,7 @@ public class Main {
 
 	public static void main(String[] args) {
 		
-		Machine m = MachineLoader.loadMachine("machine/machine.txt");
+		Machine m = MachineLoader.loadMachine("machine.txt");
 		
 		State.setAlias(true);
 		

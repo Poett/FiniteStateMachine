@@ -22,7 +22,7 @@ public class StateAlias {
 		
 		Scanner scanner;
 		try {
-			scanner = new Scanner(new File("machine/aliases.txt"));
+			scanner = new Scanner(new File("aliases.txt"));
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
