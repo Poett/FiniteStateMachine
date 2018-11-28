@@ -1,0 +1,9 @@
+states{A,B,C,D}
+finalStates{D}
+startState{A}
+alphabet{emp,a,b}
+totalTrans=4
+A,emp,B
+B,a,C
+B,b,D
+C,a,A
