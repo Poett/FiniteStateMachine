@@ -6,6 +6,7 @@ public class Main {
 		
 		Machine m = MachineLoader.loadMachine("machine/machine.txt");
 		
+		State.setAlias(true);
 		
 		System.out.println("---------NFA---------");
 		System.out.println(m);
@@ -13,6 +14,8 @@ public class Main {
 		System.out.println(m.toDFA());
 		System.out.println("---------Minimized---------");
 		System.out.println(m.minimize(Machine.Minimizer.Brzozowski));
+		System.out.println("---------Minimized2---------");
+		System.out.println(m.minimize(Machine.Minimizer.Brzozowski).toDFA());
 	}
 
 }

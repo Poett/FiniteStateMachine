@@ -45,7 +45,7 @@ public class StateAlias {
 	
 	public void declareNewAlias(State s) 
 	{
-		int index = s.hashCode() % list_array.size();
+		int index = Math.abs(s.hashCode() % list_array.size());
 		String alias = list_array.get(index);
 		
 		while(list_map.containsValue(alias)) 
