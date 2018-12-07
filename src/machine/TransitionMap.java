@@ -41,6 +41,19 @@ public class TransitionMap {
 		}
 	}
 	
+
+	public void convert(State left, State right) 
+	{
+		for(String a : alphabet) 
+		{
+			if(transitions.get(a).contains(right)) 
+			{
+				transitions.get(a).remove(right);
+				transitions.get(a).add(left);
+			}
+		}
+	}
+	
 	public HashSet<State> getStates(String transition)
 	{
 		return transitions.get(transition);
@@ -73,6 +86,7 @@ public class TransitionMap {
 		
 		return machine_partial;
 	}
+	
 	
 	public void combine(TransitionMap t) 
 	{

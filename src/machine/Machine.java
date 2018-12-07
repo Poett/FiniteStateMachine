@@ -3,6 +3,7 @@ package machine;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -108,7 +109,36 @@ public class Machine {
 			machine.put(s, new TransitionMap(this.alphabet, s)); // initialize an transition map for the state
 		}
 	}
+	
+//	public HashMap<State, TransitionMap> removeState(State s) 
+//	{
+//		
+//		machine.remove(s);
+//		states.remove(s);
+//		ends.remove(s);
+//		if(start.equals(s)) {start = null;}
+//
+//		HashMap<State, TransitionMap> removedTransitions = new HashMap<>();
+//		
+//		for(State s : machine.keySet()) 
+//		{
+//			for(String a : alphabet) 
+//			{
+//				
+//			}
+//		}
+//	}
 
+	public HashSet<State> transition(State p, String a) 
+	{
+		return machine.get(p).getStates(a);
+	}
+	
+	public State transitionDFA(State p, String a) 
+	{
+		return machine.get(p).getStates(a).iterator().next();
+	}
+	
 	// Add transition from one state to another state
 	public void addTransition(State from_State, String transition, State to_State) {
 		machine.get(from_State).addTransition(transition, to_State);
@@ -127,6 +157,35 @@ public class Machine {
 
 		return closure;
 
+	}
+	
+	/*
+	 * Right will be merged into left
+	 * Left's name will change to Left|Right
+	 * Any other state going to right will go to left instead
+	 * Right will be removed from the machine
+	 * If Right was a final or initial, left will become that as well
+	 */
+	public boolean merge(State left, State right) 
+	{
+		
+		if(!(states.contains(left) && states.contains(right))) {return false;}
+		
+		//Remove right from machine and states
+		states.remove(right);
+		machine.remove(right);
+		if(ends.remove(right)) {ends.add(left);}
+		if(start.equals(right)) {start = left;}
+		
+		//Redirect all transitions to right to left
+		for(State s : machine.keySet()) 
+		{
+			TransitionMap t = machine.get(s);
+			t.convert(left, right);
+		}
+		
+		
+		return true;
 	}
 
 	public Machine reverse() {
@@ -271,17 +330,125 @@ public class Machine {
 
 	public enum Minimizer {
 		Huffman {
+			private boolean[][] distinctTable;
+			private State[] stateArray;
+			
 			@Override
 			public Machine minimize(Machine machine) {
-				Machine huff = new Machine(machine.alphabet);
+				Machine huff = machine.toDFA();
 
+				stateArray = huff.states.toArray(new State[huff.states.size()]); //Bridge to index-based array
+				distinctTable = new boolean[stateArray.length][stateArray.length]; //create the distinct table
+				
+				/*
+				 * Nested loop indexes over distinction matrix
+				 * 
+				 * i:(0 -> second to last element)
+				 * 		j:(i+1 -> last element)
+				 */
+				//Initial nested loop that distinguishes finals vs nonfinals
+				for(int i = 0; i < stateArray.length-2; i++) 
+				{
+					for(int j = i+1 ; j < stateArray.length-1; j++) 
+					{
+						State p = stateArray[i];
+						State q = stateArray[j];
+						//if a is final
+						if(huff.ends.contains(p))
+							//and b is nonfinal
+							if(!(huff.ends.contains(q)))
+								distinctTable[i][j] = true;
+						//or if a is nonfinal
+						else
+							//and b is final
+							if(huff.ends.contains(q))
+								distinctTable[i][j] = true;
+					}
+				}
+				
+				//Loops through each pairs of state to check their distinction
+				boolean checkDistinguished = true; //Switch for while loop ; checks for no change
+				while(checkDistinguished) 
+				{
+					//Default to turn off switch, if there's a change, it will switch back on
+					checkDistinguished = false;
+					
+					//Matrix nested loop
+					for(int i = 0; i < stateArray.length-2; i++) 
+					{
+						for(int j = i+1 ; j < stateArray.length-1; j++) 
+						{
+							//If distinction is empty, check it
+							if(distinctTable[i][j] == false) 
+							{
+								//If a distinction was found, set it on the table and allow for recheck
+								if(getDistinct(stateArray[i], stateArray[j], huff)) 
+								{
+									
+									distinctTable[i][j] = true; //set distinct(i, j)
+									checkDistinguished = true; //switch on
+								}
+							}
+						}
+					}
+					
+				}
+				
+				//Last nested loop to check if any states are not distinct
+				//If any pairs are not distinct, merge them
+				for(int i = 0; i < stateArray.length-2; i++) 
+				{
+					for(int j = i+1 ; j < stateArray.length-1; j++) 
+					{
+						//If distinction is empty, merge it
+						if(distinctTable[i][j] == false) 
+						{
+							huff.merge(stateArray[i], stateArray[j]);
+						}
+					}
+				}
+				
+				
 				return huff;
 			}
+			
+			private int getIndexOf(State s) 
+			{
+				int index = -1;
+				
+				for(int i = 0; i < stateArray.length; i++) 
+				{
+					if(stateArray[i].equals(s))
+						index = i;
+				}
+				
+				return index;
+			}
+			
+			private boolean getDistinct(State p, State q, Machine machine) 
+			{	
+				for(String a : machine.alphabet) 
+				{
+					State pa = machine.transitionDFA(p, a);
+					State qa = machine.transitionDFA(q, a);
+					
+					int pai = getIndexOf(pa);
+					int qai = getIndexOf(qa);
+					
+					if(distinctTable[pai][qai] == true) 
+					{
+						return true;
+					}
+				}
+				
+				return false;
+			}
 		},
+		
 		Brzozowski {
 			@Override
 			public Machine minimize(Machine machine) {
-				return machine.toDFA().reverse().toDFA().reverse();
+				return machine.toDFA().reverse().toDFA().reverse().toDFA();
 
 			}
 		},

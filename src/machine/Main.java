@@ -8,14 +8,19 @@ public class Main {
 		
 		State.setAlias(true);
 		
+		
+		
 		System.out.println("---------NFA---------");
 		System.out.println(m);
 		System.out.println("---------DFA---------");
 		System.out.println(m.toDFA());
+		System.out.println("---------NFA---------");
+		System.out.println(m);
 		System.out.println("---------Minimized---------");
+
+		System.out.println("---------Brzozowski---------");
 		System.out.println(m.minimize(Machine.Minimizer.Brzozowski));
-		System.out.println("---------Minimized2---------");
-		System.out.println(m.minimize(Machine.Minimizer.Brzozowski).toDFA());
+	
 	}
 
 }
